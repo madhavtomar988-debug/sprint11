@@ -149,7 +149,7 @@ export default function Home() {
     {item.title} - {item.status}
     {item.image && (
   <img
-    src={`http://127.0.0.1:5000/uploads/${item.image}`}
+    src={item.image}
     alt={item.title}
     width="100"
   />
