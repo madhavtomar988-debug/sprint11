@@ -6,7 +6,7 @@ import Button from "./Components/Button";
 export default function Home() {
   const handleDelete = async (id: string) => {
   try {
-    const res = await fetch(`http://127.0.0.1:5000/api/data/${id}`, {
+    const res = await fetch(`/api/data/${id}`, {
       method: "DELETE",
     });
 
@@ -40,7 +40,7 @@ export default function Home() {
       formData.append("image", image);
     }
 
-    const res = await fetch("http://127.0.0.1:5000/api/data", {
+    const res = await fetch("/api/data", {
       method: "POST",
       body: formData,
     });
@@ -62,7 +62,7 @@ export default function Home() {
     try {
       console.log("Fetching...");
 
-      const res = await fetch("http://127.0.0.1:5000/api/data");
+      const res = await fetch("/api/data");
       if (!res.ok) {
   throw new Error(`HTTP ${res.status}`);
 }
@@ -83,7 +83,7 @@ export default function Home() {
 
   const handleDelete = async (id: string) => {
   try {
-    const res = await fetch(`http://127.0.0.1:5000/api/data/${id}`, {
+    const res = await fetch(`/api/data/${id}`, {
       method: "DELETE",
     });
 
