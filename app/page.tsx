@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
+import { io } from "socket.io-client";
 import Button from "./Components/Button";
 
 export default function Home() {
@@ -21,6 +22,14 @@ export default function Home() {
   }
 };
   const [data, setData] = useState<any[]>([]);
+  const [messages, setMessages] = useState<
+  { username: string; message: string }[]
+>([]); 
+  const [username, setUsername] = useState("");
+  const [room, setRoom] = useState("general");
+  const [typingUsers, setTypingUsers] = useState("");
+  const [isTyping, setIsTyping] = useState(false);
+  const socketRef = useRef<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [title, setTitle] = useState("");
@@ -56,13 +65,47 @@ export default function Home() {
     console.error(err);
   }
 };
+  useEffect(() => {
+  const socket = socketRef.current;
+
+  if (socket && socket.connected && room) {
+    socket.emit("join-room", room);
+  }
+}, [room]);
+  
+  useEffect(() => {
+  const socket = io("http://127.0.0.1:5000");
+  socketRef.current = socket;
+  
+  socket.on("connect", () => {
+  socket.emit("join-room", room);
+});
+  
+
+  socket.on("chat-message", (message) => {
+  console.log("Received:", message);
+  setMessages((prev) => [...prev, message]);
+});
+  socket.on("typing", ({ username }) => {
+  setTypingUsers(username);
+  setIsTyping(true);
+});
+  socket.on("stop-typing", () => {
+  setIsTyping(false);
+  setTypingUsers("");  
+});
+
+  return () => {
+    socket.disconnect();
+  };
+}, []);
 
   useEffect(() => {
   const fetchData = async () => {
     try {
       console.log("Fetching...");
 
-      const res = await fetch("/api/data");
+      const res = await fetch("http://127.0.0.1:5000/api/data");
       if (!res.ok) {
   throw new Error(`HTTP ${res.status}`);
 }
@@ -142,6 +185,67 @@ export default function Home() {
       {loading && <p>Loading...</p>}
 
       {error && <p>{error}</p>}
+
+      <div>
+  
+  <select
+  value={room}
+  onChange={(e) => setRoom(e.target.value)}
+>
+  <option value="general">General</option>
+  <option value="tech">Tech</option>
+</select>
+
+  <input
+  type="text"
+  placeholder="Your name"
+  value={username}
+  onChange={(e) => setUsername(e.target.value)}
+/>
+  {typingUsers && <p>{typingUsers} is typing...</p>}
+  <input
+  type="text"
+  id="messageInput"
+  placeholder="Type a message"
+  onChange={() => {
+  if (socketRef.current) {
+    socketRef.current.emit("typing", {
+      username,
+    });
+
+    setTimeout(() => {
+      socketRef.current?.emit("stop-typing");
+    }, 1000);
+  }
+}}
+/>
+
+  <button
+    onClick={() => {
+      const input = document.getElementById(
+        "messageInput"
+      ) as HTMLInputElement;
+
+      socketRef.current?.emit("chat-message", {
+  username,
+  message: input.value,
+  room,
+});
+
+      input.value = "";
+    }}
+  >
+    Send Message
+  </button>
+</div>
+
+      <div>
+  {messages.map((message, index) => (
+    <p key={index}>
+  <strong>{message.username}:</strong> {message.message}
+</p>
+  ))}
+</div>
 
       <ul>
         {data.map((item: any) => (

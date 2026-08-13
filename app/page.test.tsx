@@ -54,8 +54,8 @@ test("submits new data", async () => {
     fireEvent.click(addButton);
     
 
-    expect(global.fetch).toHaveBeenCalledWith(
-  "http://127.0.0.1:5000/api/data",
+   expect(global.fetch).toHaveBeenCalledWith(
+  "/api/data",
   expect.objectContaining({
     method: "POST",
   })

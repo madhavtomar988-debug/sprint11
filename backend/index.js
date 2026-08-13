@@ -1,6 +1,9 @@
 const express = require("express");
 console.log("NEW INDEX.JS LOADED");
 
+const http = require("http");
+const { Server } = require("socket.io");
+
 require("dotenv").config({
   path: require("path").resolve(__dirname, "../.env"),
 });
@@ -96,6 +99,56 @@ app.delete("/api/data/:id", async (req, res) => {
   }
 });
 
-app.listen(process.env.PORT, "127.0.0.1", () => {
+const server = http.createServer(app);
+
+const io = new Server(server, {
+  cors: {
+    origin: ["http://localhost:3000", "http://127.0.0.1:3000"],
+    methods: ["GET", "POST"],
+  },
+});
+
+io.on("connection", (socket) => {
+  console.log("Client connected:", socket.id);
+  socket.on("join-room", (room) => {
+  socket.join(room);
+  console.log(`${socket.id} joined room: ${room}`);
+});
+  socket.on("chat-message", ({ username, message, room }) => {
+  console.log(`${username}: ${message} | Room: ${room}`);
+
+  io.to(room).emit("chat-message", {
+    username,
+    message,
+  });
+});
+
+  socket.on("join-room", (room) => {
+  if (socket.currentRoom) {
+    socket.leave(socket.currentRoom);
+  }
+
+  socket.join(room);
+  socket.currentRoom = room;
+
+  console.log(`${socket.id} joined room: ${room}`);
+});
+
+  
+
+  socket.on("typing", ({ username }) => {
+  socket.broadcast.emit("typing", { username });
+});
+
+socket.on("stop-typing", () => {
+  socket.broadcast.emit("stop-typing");
+});
+
+  socket.on("disconnect", () => {
+    console.log("Client disconnected:", socket.id);
+  });
+});
+
+server.listen(process.env.PORT, "127.0.0.1", () => {
   console.log(`Server running on http://127.0.0.1:${process.env.PORT}`);
 });
