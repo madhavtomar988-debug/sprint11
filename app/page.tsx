@@ -4,6 +4,11 @@ import { useEffect, useState, useRef } from "react";
 import { io } from "socket.io-client";
 import Button from "./Components/Button";
 
+const API_URL =
+  typeof window !== "undefined" && window.location.hostname === "localhost"
+    ? "http://127.0.0.1:5000"
+    : "";
+
 export default function Home() {
   const handleDelete = async (id: string) => {
   try {
@@ -105,7 +110,7 @@ export default function Home() {
     try {
       console.log("Fetching...");
 
-      const res = await fetch("http://127.0.0.1:5000/api/data");
+      const res = await fetch(`${API_URL}/api/data`);
       if (!res.ok) {
   throw new Error(`HTTP ${res.status}`);
 }
@@ -116,7 +121,8 @@ export default function Home() {
       console.log("Result:", result);
 
       setData(result);
-    } catch (err) {
+    } 
+    catch (err) {
       console.error(err);
       setError("Failed to fetch data");
     } finally {
